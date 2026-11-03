@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SOUNDCRAFT — Discover Your Next Favorite Song</title>
+  <meta name="description" content="A personal music recommendation space. Request a song, explore curated picks, and find something worth listening to." />
+  <meta name="theme-color" content="#ffffff" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Three.js import map -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.182.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <!-- Public config (safe anon key only) -->
+  <script src="config.js"></script>
+</head>
+<body>
+
+  <!-- ============ LOADING SCREEN ============ -->
+  <div class="loader" id="loader" aria-label="Loading site" role="status">
+    <div class="loader-vinyl" aria-hidden="true">
+      <span></span>
+    </div>
+    <p class="loader-text">Tuning the room…</p>
+  </div>
+
+  <!-- ============ SETUP BANNER ============ -->
+  <div class="setup-banner" id="setupBanner" hidden>
+    <span>Live database not connected. Add your Supabase keys in <code>config.js</code> to enable real submissions.</span>
+    <button type="button" class="setup-banner-close" id="setupBannerClose" aria-label="Dismiss setup notice">×</button>
+  </div>
+
+  <!-- ============ SVG ICON SPRITE ============ -->
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon-sprite" aria-hidden="true">
+    <symbol id="icon-instagram" viewBox="0 0 24 24">
+      <rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <circle cx="17.2" cy="6.8" r="1" fill="currentColor"/>
+    </symbol>
+    <symbol id="icon-tiktok" viewBox="0 0 24 24">
+      <path d="M14 4v9.2a3.8 3.8 0 1 1-3.2-3.75" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M14 4c.5 2.2 2 3.7 4.2 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-spotify" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M7.2 9.2c3.4-1 6.8-.7 9.6 1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M7.8 12.2c2.8-.8 5.5-.5 7.8.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M8.4 15.1c2.2-.6 4.3-.4 6.1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-youtube" viewBox="0 0 24 24">
+      <rect x="3" y="6" width="18" height="12" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M10.5 9.5l4.2 2.5-4.2 2.5z" fill="currentColor"/>
+    </symbol>
+    <symbol id="icon-pinterest" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M9 20l2.5-8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M10.2 12.2c-.6-2.2.7-4.2 2.9-4.2 1.9 0 3.1 1.2 3.1 3 0 2.4-1.4 4.2-3.2 4.2-1 0-1.7-.5-1.9-1.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-x" viewBox="0 0 24 24">
+      <path d="M5 4l14 16M19 4L5 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-discord" viewBox="0 0 24 24">
+      <path d="M7.5 17c-2.2-3.2-2-7 .2-10 1-.7 2-1.2 3.1-1.4l.4.9a11 11 0 0 1 1.6 0l.4-.9c1.1.2 2.1.7 3.1 1.4 2.2 3 2.4 6.8.2 10-1 .5-2 .8-3 .9l-.7-1.2a10 10 0 0 1-2.6 0L9.5 18c-1-.1-2-.4-3-.9Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      <circle cx="9.5" cy="12" r="1" fill="currentColor"/>
+      <circle cx="14.5" cy="12" r="1" fill="currentColor"/>
+    </symbol>
+    <symbol id="icon-sun" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-moon" viewBox="0 0 24 24">
+      <path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-menu" viewBox="0 0 24 24">
+      <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24">
+      <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-arrow-right" viewBox="0 0 24 24">
+      <path d="M4 12h16M14 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-lock" viewBox="0 0 24 24">
+      <rect x="5" y="10" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    </symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24">
+      <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-search" viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M16 16l4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24">
+      <path d="M12 4v11M8 12l4 4 4-4M5 20h14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-copy" viewBox="0 0 24 24">
+      <rect x="8" y="8" width="11" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    </symbol>
+    <symbol id="icon-trash" viewBox="0 0 24 24">
+      <path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13M10 11v5M14 11v5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-edit" viewBox="0 0 24 24">
+      <path d="M4 20l4-1 11-11-3-3L5 16l-1 4ZM14.5 5.5l3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24">
+      <path d="M5 12.5l4 4L19 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-star" viewBox="0 0 24 24">
+      <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.2 1 5.9-5.2-2.7-5.2 2.7 1-5.9L3.5 9.7l5.9-.9L12 3.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-note" viewBox="0 0 24 24">
+      <path d="M6 4h12v16H6z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M9 8h6M9 12h6M9 16h4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-external" viewBox="0 0 24 24">
+      <path d="M14 4h6v6M20 4l-9 9M18 14v5H5V6h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-play" viewBox="0 0 24 24">
+      <path d="M8 5.5l11 6.5-11 6.5z" fill="currentColor"/>
+    </symbol>
+    <symbol id="icon-chevron-down" viewBox="0 0 24 24">
+      <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </svg>
+
+  <!-- ============ NAVIGATION ============ -->
+  <header class="nav-wrap" id="siteNav">
+    <nav class="nav glass" aria-label="Primary navigation">
+      <a href="#home" class="brand" data-nav aria-label="Go to home">
+        <span class="brand-mark" data-brand-mark>SC</span>
+        <span class="brand-name" data-site-brand>SOUNDCRAFT</span>
+      </a>
+
+      <div class="nav-links" role="menubar">
+        <a href="#home" data-nav class="nav-link active">Home</a>
+        <a href="#request" data-nav class="nav-link">Request Music</a>
+        <a href="#featured" data-nav class="nav-link">Featured</a>
+        <a href="#about" data-nav class="nav-link">About Me</a>
+        <a href="#connect" data-nav class="nav-link">Connect With Me</a>
+      </div>
+
+      <div class="nav-actions">
+        <button type="button" class="icon-btn" id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">
+          <svg class="icon icon-sun"><use href="#icon-sun"></use></svg>
+          <svg class="icon icon-moon"><use href="#icon-moon"></use></svg>
+        </button>
+        <button type="button" class="icon-btn mobile-only" id="mobileMenuBtn" aria-label="Open menu" aria-expanded="false">
+          <svg class="icon"><use href="#icon-menu"></use></svg>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ============ MOBILE MENU ============ -->
+  <div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+    <div class="mobile-menu-inner glass">
+      <div class="mobile-menu-head">
+        <span class="brand">
+          <span class="brand-mark" data-brand-mark>SC</span>
+          <span class="brand-name" data-site-brand>SOUNDCRAFT</span>
+        </span>
+        <button type="button" class="icon-btn" id="mobileMenuClose" aria-label="Close menu">
+          <svg class="icon"><use href="#icon-close"></use></svg>
+        </button>
+      </div>
+      <div class="mobile-links">
+        <a href="#home" data-nav data-mobile-link>Home</a>
+        <a href="#request" data-nav data-mobile-link>Request Music</a>
+        <a href="#featured" data-nav data-mobile-link>Featured</a>
+        <a href="#about" data-nav data-mobile-link>About Me</a>
+        <a href="#connect" data-nav data-mobile-link>Connect With Me</a>
+      </div>
+      <div class="mobile-menu-foot">
+        <button type="button" class="btn btn-ghost btn-sm" data-open-admin>
+          <svg class="icon"><use href="#icon-lock"></use></svg>
+          Admin
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <main>
+
+    <!-- ============ HERO ============ -->
+    <section class="hero" id="home">
+      <div class="hero-atmosphere" aria-hidden="true"></div>
+
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow reveal">
+            <span class="eyebrow-dot"></span>
+            A personal music recommendation platform
+          </div>
+
+          <h1 class="hero-title reveal">
+            Discover Your Next
+            <em>Favorite Song.</em>
+          </h1>
+
+          <p class="hero-sub reveal">
+            Have a song in mind? Let me know. I’ll find something worth listening to.
+          </p>
+
+          <div class="hero-actions reveal">
+            <a href="#request" class="btn btn-primary" data-nav>
+              Request a Song
+              <svg class="icon"><use href="#icon-arrow-right"></use></svg>
+            </a>
+            <a href="#featured" class="btn btn-ghost" data-nav>
+              Explore Featured Music
+            </a>
+          </div>
+
+          <div class="hero-note glass reveal">
+            <div class="hero-note-avatar" data-profile-avatar>
+              <span data-profile-initials>YN</span>
+            </div>
+            <p>
+              <strong>Welcome.</strong>
+              <span data-welcome-message>This is a quiet corner of the internet for songs that deserve a second listen.</span>
+            </p>
+          </div>
+
+          <div class="hero-micro reveal">
+            <span>Curated weekly</span>
+            <span class="micro-dot"></span>
+            <span>Every mood</span>
+            <span class="micro-dot"></span>
+            <span>Human picks, not algorithms</span>
+          </div>
+        </div>
+
+        <div class="hero-stage reveal" aria-label="Interactive 3D music visual">
+          <div class="hero-3d" id="hero3d" aria-hidden="true"></div>
+
+          <div class="float-card float-card--1 glass tilt">
+            <span class="float-card-label">Now curating</span>
+            <strong>Late Night<br />&amp; Dreamy</strong>
+            <span class="float-card-meta">11 tracks · 48 min</span>
+          </div>
+
+          <div class="float-card float-card--2 glass tilt">
+            <span class="float-card-label">Mood of the week</span>
+            <strong>Nostalgic</strong>
+            <div class="mini-bars" aria-hidden="true">
+              <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            </div>
+          </div>
+
+          <div class="float-card float-card--3 glass tilt">
+            <svg class="icon float-note"><use href="#icon-note"></use></svg>
+            <span>Requested by<br /><strong>you</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="waveform-wrap" aria-hidden="true">
+        <canvas id="waveform"></canvas>
+      </div>
+
+      <a href="#request" class="scroll-cue" data-nav aria-label="Scroll to request form">
+        <span></span>
+      </a>
+    </section>
+
+    <!-- ============ REQUEST FORM ============ -->
+    <section class="section request-section" id="request">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-dot"></span> Make a request</div>
+            <h2 class="section-title">Tell me what you’re <em>looking for.</em></h2>
+          </div>
+          <p class="section-lead">
+            A song, an artist, a mood, or a feeling you can’t name yet. I read every request personally.
+          </p>
+        </div>
+
+        <div class="request-layout">
+          <form class="request-form glass reveal" id="requestForm" novalidate>
+            <div class="form-grid">
+              <div class="field">
+                <label for="reqName">Your name / username <span class="req">*</span></label>
+                <input id="reqName" name="name" type="text" autocomplete="name" placeholder="e.g. Aria" required maxlength="80" />
+              </div>
+
+              <div class="field">
+                <label for="reqEmail">Email <span class="optional">optional</span></label>
+                <input id="reqEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" maxlength="120" />
+              </div>
+
+              <div class="field">
+                <label for="reqSong">Song name <span class="optional">optional</span></label>
+                <input id="reqSong" name="song_name" type="text" placeholder="A song you love or want me to find" maxlength="140" />
+              </div>
+
+              <div class="field">
+                <label for="reqArtist">Artist name <span class="optional">optional</span></label>
+                <input id="reqArtist" name="artist_name" type="text" placeholder="Artist or band" maxlength="120" />
+              </div>
+
+              <div class="field">
+                <label for="reqGenre">Music genre</label>
+                <select id="reqGenre" name="genre">
+                  <option value="">Select a genre</option>
+                  <option>Pop</option><option>Rock</option><option>Hip-Hop / Rap</option>
+                  <option>R&amp;B / Soul</option><option>Indie</option><option>Electronic</option>
+                  <option>Lo-fi</option><option>Jazz</option><option>Classical</option>
+                  <option>Metal</option><option>Folk</option><option>Country</option>
+                  <option>K-Pop</option><option>Afrobeats</option><option>Other</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="reqLanguage">Language</label>
+                <select id="reqLanguage" name="language">
+                  <option value="">Select a language</option>
+                  <option>English</option><option>Hindi</option><option>Spanish</option>
+                  <option>Korean</option><option>Japanese</option><option>French</option>
+                  <option>Arabic</option><option>Portuguese</option><option>Instrumental</option>
+                  <option>Other</option>
+                </select>
+              </div>
+
+              <div class="field field--full">
+                <label for="reqLink">Spotify / YouTube link <span class="optional">optional</span></label>
+                <input id="reqLink" name="link" type="url" placeholder="https://open.spotify.com/... or https://youtube.com/..." maxlength="500" />
+              </div>
+
+              <div class="field field--full">
+                <span class="field-label">Mood / vibe <span class="req">*</span></span>
+                <div class="mood-grid" role="radiogroup" aria-label="Mood or vibe">
+                  <input type="radio" name="mood" id="mood-sad" value="Sad" required />
+                  <label for="mood-sad">Sad</label>
+                  <input type="radio" name="mood" id="mood-romantic" value="Romantic" />
+                  <label for="mood-romantic">Romantic</label>
+                  <input type="radio" name="mood" id="mood-chill" value="Chill" />
+                  <label for="mood-chill">Chill</label>
+                  <input type="radio" name="mood" id="mood-dreamy" value="Dreamy" />
+                  <label for="mood-dreamy">Dreamy</label>
+                  <input type="radio" name="mood" id="mood-nostalgic" value="Nostalgic" />
+                  <label for="mood-nostalgic">Nostalgic</label>
+                  <input type="radio" name="mood" id="mood-dark" value="Dark" />
+                  <label for="mood-dark">Dark</label>
+                  <input type="radio" name="mood" id="mood-happy" value="Happy" />
+                  <label for="mood-happy">Happy</label>
+                  <input type="radio" name="mood" id="mood-heartbreak" value="Heartbreak" />
+                  <label for="mood-heartbreak">Heartbreak</label>
+                  <input type="radio" name="mood" id="mood-late-night" value="Late Night" />
+                  <label for="mood-late-night">Late Night</label>
+                  <input type="radio" name="mood" id="mood-energetic" value="Energetic" />
+                  <label for="mood-energetic">Energetic</label>
+                  <input type="radio" name="mood" id="mood-underrated" value="Underrated Gems" />
+                  <label for="mood-underrated">Underrated Gems</label>
+                </div>
+              </div>
+
+              <div class="field field--full">
+                <label for="reqLookingFor">What kind of music are you looking for? <span class="req">*</span></label>
+                <textarea id="reqLookingFor" name="looking_for" rows="3" placeholder="e.g. Something soft for a rainy evening, similar to Cigarettes After Sex…" required maxlength="600"></textarea>
+              </div>
+
+              <div class="field field--full">
+                <label for="reqMessage">Additional message <span class="optional">optional</span></label>
+                <textarea id="reqMessage" name="message" rows="4" placeholder="Anything else you'd like me to know?" maxlength="1000"></textarea>
+              </div>
+            </div>
+
+            <div class="form-footer">
+              <p class="form-privacy">
+                No spam. Your email is only used if I need to reply to your request.
+              </p>
+              <button type="submit" class="btn btn-primary btn-submit" id="formSubmitBtn">
+                <span class="btn-label">Send Request</span>
+                <span class="btn-spinner" aria-hidden="true"></span>
+                <svg class="icon"><use href="#icon-arrow-right"></use></svg>
+              </button>
+            </div>
+
+            <div class="form-message" id="formMessage" role="status" aria-live="polite"></div>
+          </form>
+
+          <aside class="request-aside reveal">
+            <div class="aside-card glass">
+              <span class="aside-number">01</span>
+              <h3>Every request is read.</h3>
+              <p>No auto‑generated playlists. I look at the mood, the memory, and the moment — then find something that fits.</p>
+            </div>
+            <div class="aside-card glass">
+              <span class="aside-number">02</span>
+              <h3>Good songs travel.</h3>
+              <p>If your request is a perfect fit, it may appear in the Featured section for someone else to discover.</p>
+            </div>
+            <div class="aside-card aside-card--accent">
+              <span class="aside-number">03</span>
+              <h3>Underrated gems welcome.</h3>
+              <p>The best recommendations are often the ones nobody has heard yet.</p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FEATURED MUSIC ============ -->
+    <section class="section featured-section" id="featured">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-dot"></span> The listening room</div>
+            <h2 class="section-title">Featured <em>music.</em></h2>
+          </div>
+          <p class="section-lead">
+            A rotating selection of songs I keep coming back to. Hover, tilt, and find your next repeat.
+          </p>
+        </div>
+
+        <div class="featured-tabs reveal" id="featuredTabs" role="tablist" aria-label="Featured music categories"></div>
+
+        <div class="featured-spotlight" id="featuredSpotlight" aria-live="polite"></div>
+
+        <div class="featured-grid" id="featuredGrid" aria-live="polite"></div>
+
+        <div class="empty-state glass" id="featuredEmpty" hidden>
+          <svg class="icon"><use href="#icon-note"></use></svg>
+          <h3>No featured songs yet.</h3>
+          <p>Add songs from the admin dashboard and they will appear here.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ABOUT ============ -->
+    <section class="section about-section" id="about">
+      <div class="container about-grid">
+        <div class="about-visual reveal">
+          <div class="about-frame glass tilt">
+            <div class="about-avatar" data-profile-avatar>
+              <span data-profile-initials>YN</span>
+            </div>
+            <div class="about-frame-meta">
+              <span data-display-name>Your Name</span>
+              <span data-tagline>A personal music recommendation space.</span>
+            </div>
+          </div>
+
+          <div class="visualizer-card glass">
+            <div class="visualizer-head">
+              <span>Live visualizer</span>
+              <button type="button" class="icon-btn icon-btn--small" id="visualizerBoost" aria-label="Energize visualizer" title="Energize">
+                <svg class="icon"><use href="#icon-play"></use></svg>
+              </button>
+            </div>
+            <canvas id="visualizer" aria-hidden="true"></canvas>
+            <p class="visualizer-note">Move your cursor across the bars.</p>
+          </div>
+        </div>
+
+        <div class="about-copy reveal">
+          <div class="eyebrow"><span class="eyebrow-dot"></span> About me</div>
+          <h2 class="section-title">A listener first, <em>always.</em></h2>
+          <div class="about-text" id="aboutText">
+            <p>I am a lifelong listener with a soft spot for songs that feel like a room you can step into.</p>
+            <p>My taste moves between dreamy indie, late‑night R&amp;B, cinematic instrumentals, and underrated gems that never got their moment. I love recommending music because a good song can change the temperature of an entire day.</p>
+          </div>
+
+          <div class="genre-tags" aria-label="Favourite genres">
+            <span>Dream Pop</span><span>Alt R&amp;B</span><span>Lo‑fi</span><span>Indie Folk</span><span>Shoegaze</span><span>Late‑night Jazz</span>
+          </div>
+
+          <div class="about-stats">
+            <div><strong>Always</strong><span>listening</span></div>
+            <div><strong>Open</strong><span>requests</span></div>
+            <div><strong>Human</strong><span>picks</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CONNECT ============ -->
+    <section class="section connect-section" id="connect">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-dot"></span> Connect with me</div>
+            <h2 class="section-title">Find me <em>elsewhere.</em></h2>
+          </div>
+          <p class="section-lead">
+            Music lives in more than one place. Follow along, send a message, or share a song.
+          </p>
+        </div>
+
+        <div class="social-grid" id="socialGrid" aria-live="polite"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="brand">
+          <span class="brand-mark" data-brand-mark>SC</span>
+          <span class="brand-name" data-site-brand>SOUNDCRAFT</span>
+        </span>
+        <p>A personal music recommendation platform. Built for the love of the next favorite song.</p>
+      </div>
+
+      <div class="footer-links">
+        <a href="#home" data-nav>Home</a>
+        <a href="#request" data-nav>Request</a>
+        <a href="#featured" data-nav>Featured</a>
+        <a href="#about" data-nav>About</a>
+        <a href="#connect" data-nav>Connect</a>
+        <button type="button" class="link-btn" data-open-admin>Admin</button>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© <span id="footerYear"></span> <span data-site-brand>SOUNDCRAFT</span>. All songs belong to their artists.</span>
+        <span>Made with care, not algorithms.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============ ADMIN OVERLAY ============ -->
+  <div class="admin-overlay" id="adminOverlay" hidden>
+    <div class="admin-shell glass">
+      <header class="admin-head">
+        <div class="admin-head-title">
+          <span class="admin-kicker">Private studio</span>
+          <h2>Request Management</h2>
+        </div>
+        <div class="admin-head-actions">
+          <button type="button" class="btn btn-ghost btn-sm" id="adminBackBtn">Back to site</button>
+          <button type="button" class="icon-btn" id="adminCloseBtn" aria-label="Close admin dashboard">
+            <svg class="icon"><use href="#icon-close"></use></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Login view -->
+      <section class="admin-login" id="adminLoginView">
+        <div class="admin-login-card">
+          <div class="admin-lock-icon">
+            <svg class="icon"><use href="#icon-lock"></use></svg>
+          </div>
+          <h3>Admin sign in</h3>
+          <p>Use the admin account you created in Supabase Authentication.</p>
+          <form id="adminLoginForm" novalidate>
+            <div class="field">
+              <label for="adminEmail">Email</label>
+              <input id="adminEmail" name="email" type="email" autocomplete="username" required placeholder="admin@example.com" />
+            </div>
+            <div class="field">
+              <label for="adminPassword">Password</label>
+              <input id="adminPassword" name="password" type="password" autocomplete="current-password" required placeholder="••••••••" />
+            </div>
+            <button type="submit" class="btn btn-primary btn-full" id="adminLoginBtn">Sign in</button>
+            <div class="form-message" id="adminLoginMessage" role="status" aria-live="polite"></div>
+          </form>
+          <p class="admin-help">
+            Public sign‑ups are disabled. Only accounts with <code>app_metadata.role = "admin"</code> can access this dashboard.
+          </p>
+        </div>
+      </section>
+
+      <!-- Dashboard view -->
+      <section class="admin-dashboard" id="adminDashboardView" hidden>
+        <div class="admin-stats">
+          <div class="stat-card"><span>Total requests</span><strong id="statTotal">0</strong></div>
+          <div class="stat-card"><span>Pending</span><strong id="statPending">0</strong></div>
+          <div class="stat-card"><span>Completed</span><strong id="statCompleted">0</strong></div>
+          <div class="stat-card"><span>Featured songs</span><strong id="statFeatured">0</strong></div>
+        </div>
+
+        <div class="admin-tabs" role="tablist" aria-label="Admin sections">
+          <button type="button" class="admin-tab active" data-admin-tab="requests" role="tab" aria-selected="true">Requests</button>
+          <button type="button" class="admin-tab" data-admin-tab="featured" role="tab" aria-selected="false">Featured</button>
+          <button type="button" class="admin-tab" data-admin-tab="social" role="tab" aria-selected="false">Social</button>
+          <button type="button" class="admin-tab" data-admin-tab="settings" role="tab" aria-selected="false">Settings</button>
+        </div>
+
+        <!-- Requests panel -->
+        <div class="admin-panel" id="adminRequestsPanel">
+          <div class="admin-toolbar">
+            <div class="admin-search">
+              <svg class="icon"><use href="#icon-search"></use></svg>
+              <input type="search" id="adminSearch" placeholder="Search name, song, artist…" aria-label="Search requests" />
+            </div>
+            <select id="adminStatusFilter" aria-label="Filter by status">
+              <option value="all">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="reviewed">Reviewed</option>
+              <option value="accepted">Accepted</option>
+              <option value="completed">Completed</option>
+            </select>
+            <select id="adminSort" aria-label="Sort requests">
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+            </select>
+            <button type="button" class="btn btn-ghost btn-sm" id="adminExportBtn">
+              <svg class="icon"><use href="#icon-download"></use></svg> Export CSV
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" id="adminBulkAddBtn" disabled>
+              <svg class="icon"><use href="#icon-star"></use></svg> Add selected to Featured
+            </button>
+          </div>
+
+          <div class="table-wrap">
+            <table class="admin-table" id="adminRequestsTable">
+              <thead>
+                <tr>
+                  <th class="th-check"><input type="checkbox" id="adminSelectAll" aria-label="Select all requests" /></th>
+                  <th>Person</th>
+                  <th>Song / Artist</th>
+                  <th>Mood / Genre</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th class="th-actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminRequestsBody"></tbody>
+            </table>
+          </div>
+          <div class="empty-state glass" id="adminRequestsEmpty" hidden>
+            <svg class="icon"><use href="#icon-note"></use></svg>
+            <h3>No requests found.</h3>
+            <p>Try a different search or filter.</p>
+          </div>
+        </div>
+
+        <!-- Featured panel -->
+        <div class="admin-panel" id="adminFeaturedPanel" hidden>
+          <div class="admin-toolbar">
+            <p class="admin-toolbar-note">Manage songs shown on the public Featured section.</p>
+            <button type="button" class="btn btn-primary btn-sm" id="adminAddFeaturedBtn">
+              <svg class="icon"><use href="#icon-plus"></use></svg> Add song
+            </button>
+          </div>
+          <div class="admin-featured-list" id="adminFeaturedList"></div>
+          <div class="empty-state glass" id="adminFeaturedEmpty" hidden>
+            <svg class="icon"><use href="#icon-star"></use></svg>
+            <h3>No featured songs yet.</h3>
+            <p>Add a song manually or promote a request.</p>
+          </div>
+        </div>
+
+        <!-- Social panel -->
+        <div class="admin-panel" id="adminSocialPanel" hidden>
+          <div class="admin-toolbar">
+            <p class="admin-toolbar-note">Edit your handles, links, and visibility. Leave a URL empty to hide a platform.</p>
+          </div>
+          <form id="adminSocialForm">
+            <div class="admin-social-list" id="adminSocialList"></div>
+            <div class="admin-form-actions">
+              <button type="submit" class="btn btn-primary">Save social links</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Settings panel -->
+        <div class="admin-panel" id="adminSettingsPanel" hidden>
+          <form id="adminSettingsForm" class="admin-settings-form">
+            <div class="form-grid">
+              <div class="field">
+                <label for="setDisplayName">Display name</label>
+                <input id="setDisplayName" name="display_name" type="text" maxlength="80" />
+              </div>
+              <div class="field">
+                <label for="setBrandName">Brand / logo name</label>
+                <input id="setBrandName" name="brand_name" type="text" maxlength="40" />
+              </div>
+              <div class="field field--full">
+                <label for="setTagline">Tagline</label>
+                <input id="setTagline" name="tagline" type="text" maxlength="160" />
+              </div>
+              <div class="field field--full">
+                <label for="setWelcome">Welcome message</label>
+                <textarea id="setWelcome" name="welcome_message" rows="2" maxlength="300"></textarea>
+              </div>
+              <div class="field field--full">
+                <label for="setAbout">About text</label>
+                <textarea id="setAbout" name="about_text" rows="8" maxlength="3000"></textarea>
+                <p class="field-hint">Separate paragraphs with a blank line.</p>
+              </div>
+              <div class="field field--full">
+                <label for="setProfileImage">Profile image URL</label>
+                <input id="setProfileImage" name="profile_image_url" type="url" maxlength="500" placeholder="https://..." />
+                <p class="field-hint">Leave empty to use a generated gradient avatar.</p>
+              </div>
+            </div>
+            <div class="admin-form-actions">
+              <button type="submit" class="btn btn-primary">Save settings</button>
+              <button type="button" class="btn btn-ghost" id="adminLogoutBtn">
+                <svg class="icon"><use href="#icon-lock"></use></svg> Sign out
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ============ EDIT REQUEST MODAL ============ -->
+  <div class="modal" id="editRequestModal" hidden>
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-panel glass" role="dialog" aria-modal="true" aria-labelledby="editRequestTitle">
+      <div class="modal-head">
+        <h3 id="editRequestTitle">Edit request</h3>
+        <button type="button" class="icon-btn" data-close-modal aria-label="Close">
+          <svg class="icon"><use href="#icon-close"></use></svg>
+        </button>
+      </div>
+      <form id="editRequestForm" class="modal-body">
+        <input type="hidden" id="editRequestId" />
+        <div class="form-grid">
+          <div class="field"><label for="editName">Name</label><input id="editName" name="name" type="text" /></div>
+          <div class="field"><label for="editEmail">Email</label><input id="editEmail" name="email" type="email" /></div>
+          <div class="field"><label for="editSong">Song</label><input id="editSong" name="song_name" type="text" /></div>
+          <div class="field"><label for="editArtist">Artist</label><input id="editArtist" name="artist_name" type="text" /></div>
+          <div class="field"><label for="editGenre">Genre</label><input id="editGenre" name="genre" type="text" /></div>
+          <div class="field"><label for="editMood">Mood</label><input id="editMood" name="mood" type="text" /></div>
+          <div class="field"><label for="editLanguage">Language</label><input id="editLanguage" name="language" type="text" /></div>
+          <div class="field"><label for="editLink">Link</label><input id="editLink" name="link" type="url" /></div>
+          <div class="field field--full"><label for="editLookingFor">Looking for</label><textarea id="editLookingFor" name="looking_for" rows="3"></textarea></div>
+          <div class="field field--full"><label for="editMessage">Message</label><textarea id="editMessage" name="message" rows="3"></textarea></div>
+          <div class="field">
+            <label for="editStatus">Status</label>
+            <select id="editStatus" name="status">
+              <option value="pending">Pending</option>
+              <option value="reviewed">Reviewed</option>
+              <option value="accepted">Accepted</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          <div class="field field--full">
+            <label for="editAdminNotes">Private admin notes</label>
+            <textarea id="editAdminNotes" name="admin_notes" rows="3" placeholder="Only visible to you."></textarea>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-close-modal>Cancel</button>
+          <button type="submit" class="btn btn-primary">Save changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ FEATURED SONG MODAL ============ -->
+  <div class="modal" id="featuredModal" hidden>
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-panel glass" role="dialog" aria-modal="true" aria-labelledby="featuredModalTitle">
+      <div class="modal-head">
+        <h3 id="featuredModalTitle">Add featured song</h3>
+        <button type="button" class="icon-btn" data-close-modal aria-label="Close">
+          <svg class="icon"><use href="#icon-close"></use></svg>
+        </button>
+      </div>
+      <form id="featuredForm" class="modal-body">
+        <input type="hidden" id="featuredId" />
+        <div class="form-grid">
+          <div class="field"><label for="featTitle">Song title *</label><input id="featTitle" name="title" type="text" required maxlength="140" /></div>
+          <div class="field"><label for="featArtist">Artist *</label><input id="featArtist" name="artist" type="text" required maxlength="120" /></div>
+          <div class="field"><label for="featGenre">Genre</label><input id="featGenre" name="genre" type="text" maxlength="80" /></div>
+          <div class="field"><label for="featMood">Mood</label><input id="featMood" name="mood" type="text" maxlength="80" /></div>
+          <div class="field field--full"><label for="featArtwork">Album artwork URL</label><input id="featArtwork" name="artwork_url" type="url" maxlength="500" placeholder="https://..." /></div>
+          <div class="field field--full"><label for="featDescription">Short description</label><textarea id="featDescription" name="description" rows="3" maxlength="400"></textarea></div>
+          <div class="field field--full"><label for="featListen">Spotify / YouTube link</label><input id="featListen" name="listen_url" type="url" maxlength="500" /></div>
+          <div class="field">
+            <label for="featCategory">Category</label>
+            <select id="featCategory" name="category">
+              <option value="featured">Featured of the Week</option>
+              <option value="favorites">Current Favorites</option>
+              <option value="underrated">Underrated Songs</option>
+              <option value="most_requested">Most Requested</option>
+              <option value="recent">Recently Added</option>
+            </select>
+          </div>
+          <div class="field"><label for="featSort">Sort order</label><input id="featSort" name="sort_order" type="number" value="0" /></div>
+          <div class="field field--full checkbox-field">
+            <input id="featActive" name="is_active" type="checkbox" checked />
+            <label for="featActive">Visible on public site</label>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-close-modal>Cancel</button>
+          <button type="submit" class="btn btn-primary">Save song</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ CONFIRM MODAL ============ -->
+  <div class="modal" id="confirmModal" hidden>
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-panel modal-panel--small glass" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <div class="modal-head">
+        <h3 id="confirmTitle">Are you sure?</h3>
+        <button type="button" class="icon-btn" data-close-modal aria-label="Close">
+          <svg class="icon"><use href="#icon-close"></use></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmText">This action cannot be undone.</p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-close-modal>Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmOkBtn">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CATEGORY MODAL ============ -->
+  <div class="modal" id="categoryModal" hidden>
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-panel modal-panel--small glass" role="dialog" aria-modal="true" aria-labelledby="categoryTitle">
+      <div class="modal-head">
+        <h3 id="categoryTitle">Add to featured</h3>
+        <button type="button" class="icon-btn" data-close-modal aria-label="Close">
+          <svg class="icon"><use href="#icon-close"></use></svg>
+        </button>
+      </div>
+      <form id="categoryForm" class="modal-body">
+        <p class="modal-note">Choose where these requests should appear.</p>
+        <div class="field">
+          <label for="categorySelect">Category</label>
+          <select id="categorySelect">
+            <option value="featured">Featured of the Week</option>
+            <option value="favorites">Current Favorites</option>
+            <option value="underrated">Underrated Songs</option>
+            <option value="most_requested">Most Requested</option>
+            <option value="recent">Recently Added</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-close-modal>Cancel</button>
+          <button type="submit" class="btn btn-primary">Add to Featured</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ TOASTS ============ -->
+  <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+  <noscript>
+    <div class="noscript">This site needs JavaScript enabled to submit requests and browse featured music.</div>
+  </noscript>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
